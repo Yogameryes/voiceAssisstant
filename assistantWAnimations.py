@@ -10,7 +10,7 @@ import numpy as np
 import math
 from PyQt5 import QtWidgets, QtGui, QtCore
 
-assistantName = "cosmo"
+assistantName = "electron"
 process_playing = None
 mpv_socket_path = "/tmp/mpvsocket"
 
