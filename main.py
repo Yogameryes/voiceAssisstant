@@ -11,8 +11,9 @@ import queue
 
 from PyQt5 import QtWidgets, QtGui, QtCore
 import sounddevice as sd
+from yt_dlp.utils import DownloadError
 
-assistantName = "electron"
+assistantName = "birju"
 process_playing = None
 mpv_socket_path = "/tmp/mpvsocket"
 
@@ -186,15 +187,22 @@ def get_from_youtube(query):
         'quiet': True,
         'skip_download': True,
         'default_search': 'ytsearch1',
-        'format': 'bestaudio/best'
+        'format': 'bestaudio/best[ext=m4a]/bestaudio/best'
     }
-    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-        info = ydl.extract_info(query, download=False)
-        if 'entries' in info and info['entries']:
-            video = info['entries'][0]
-        else:
-            video = info
-        return video['url']
+    try:
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            info = ydl.extract_info(query, download=False)
+            if 'entries' in info and info['entries']:
+                video = info['entries'][0]
+            else:
+                video = info
+            return video['url']
+    except DownloadError as e:
+        print(f"❌ Could not fetch audio: {e}")
+        return None
+    except Exception as e:
+        print(f"⚠️ Unexpected error: {e}")
+        return None
 
 def start_playing(url):
     global process_playing
@@ -247,8 +255,12 @@ def handle_command(command):
         song_name = command[4:].strip()
         if song_name:
             url = get_from_youtube(song_name)
-            start_playing(url)
-            return True
+            if url:
+                start_playing(url)
+                return True
+            else:
+                print("❌ Could not play that song.")
+                return False
         else:
             print("Please say the song name after 'play'.")
             return False
